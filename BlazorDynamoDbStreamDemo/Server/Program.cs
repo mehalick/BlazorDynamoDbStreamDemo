@@ -1,3 +1,5 @@
+using BlazorDynamoDbStreamDemo.Server.Services;
+
 namespace BlazorDynamoDbStreamDemo.Server;
 
 public class Program
@@ -6,8 +8,8 @@ public class Program
 	{
 		var builder = WebApplication.CreateBuilder(args);
 
-		builder.Services.AddControllersWithViews();
 		builder.Services.AddRazorPages();
+		builder.Services.AddGrpc();
 
 		var app = builder.Build();
 
@@ -27,10 +29,11 @@ public class Program
 		app.UseStaticFiles();
 
 		app.UseRouting();
+		app.UseGrpcWeb();
 
 		app.MapRazorPages();
-		app.MapControllers();
 		app.MapFallbackToFile("index.html");
+		app.MapGrpcService<BookService>().EnableGrpcWeb();
 
 		app.Run();
 	}

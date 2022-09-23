@@ -1,0 +1,17 @@
+syntax = "proto3";
+option csharp_namespace = "BlazorDynamoDbStreamDemo.Shared";
+
+service BookService
+{
+	rpc GetBooks (GetBooksRequest) returns (stream GetBooksReply);
+}
+
+message GetBooksRequest {
+	int32 page_size = 1;
+}
+
+message GetBooksReply {
+	int32 pk = 1;
+	int32 sk = 2;
+	string title = 3;
+}

@@ -1,3 +1,7 @@
+using BlazorDynamoDbStreamDemo.Shared;
+using Grpc.Net.Client;
+using Grpc.Net.Client.Web;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
@@ -11,8 +15,20 @@ public class Program
 		builder.RootComponents.Add<App>("#app");
 		builder.RootComponents.Add<HeadOutlet>("head::after");
 
-		builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+		builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+		builder.Services.AddSingleton(services => new BookService.BookServiceClient(Channel(services)));
 
 		await builder.Build().RunAsync();
+	}
+
+	private static GrpcChannel Channel(IServiceProvider services)
+	{
+		var baseUri = services.GetRequiredService<NavigationManager>().BaseUri;
+		var httpClient = new HttpClient(new GrpcWebHandler(GrpcWebMode.GrpcWeb, new HttpClientHandler()));
+
+		return GrpcChannel.ForAddress(baseUri, new GrpcChannelOptions
+		{
+			HttpClient = httpClient
+		});
 	}
 }
