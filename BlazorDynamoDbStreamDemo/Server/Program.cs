@@ -1,3 +1,5 @@
+using Amazon;
+using Amazon.DynamoDBv2;
 using BlazorDynamoDbStreamDemo.Server.Services;
 
 namespace BlazorDynamoDbStreamDemo.Server;
@@ -10,6 +12,12 @@ public class Program
 
 		builder.Services.AddRazorPages();
 		builder.Services.AddGrpc();
+
+		builder.Services.AddSingleton(_ =>
+			new AmazonDynamoDBClient(
+				builder.Configuration["AWS:AccessKeyId"],
+				builder.Configuration["AWS:SecretAccessKey"],
+				RegionEndpoint.USEast1));
 
 		var app = builder.Build();
 
