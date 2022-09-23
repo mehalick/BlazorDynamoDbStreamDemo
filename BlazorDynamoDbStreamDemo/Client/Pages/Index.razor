@@ -1,9 +1,80 @@
 ﻿@page "/"
+@using System.Diagnostics
+@using BlazorDynamoDbStreamDemo.Shared
+@using Grpc.Core
+@inject BookService.BookServiceClient BookServiceClient
 
 <PageTitle>Index</PageTitle>
 
-<h1>Hello, world!</h1>
+<button type="button" class="btn btn-primary mb-3" @onclick="FetchData">Fetch Data</button>
 
-Welcome to your new app.
+@if (_isFetching)
+{
+	<p>Loaded <strong>@_data.Count</strong> items in <strong>@_timeToFirstItem</strong> ms - <strong>@_timeToLastItem</strong> ms</p>
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+	<table class="table table-bordered table-striped">
+		<colgroup>
+			<col style="width: 10%;" />
+			<col style="width: 10%;" />
+			<col style="width: 80%;" />
+		</colgroup>
+		<thead>
+			<tr>
+				<th>Pk</th>
+				<th>Sk</th>
+				<th>Title</th>
+			</tr>
+		</thead>
+		<tbody>
+			<Virtualize Items="@_data">
+				<tr>
+					<td>@context.Pk</td>
+					<td>@context.Sk</td>
+					<td>@context.Title</td>
+				</tr>
+			</Virtualize>
+		</tbody>
+	</table>
+}
+
+@code {
+
+	private readonly List<GetBooksReply> _data = new();
+	private long _timeToFirstItem;
+	private long _timeToLastItem;
+	private bool _isFetching;
+
+	protected async Task FetchData()
+	{
+		_data.Clear();
+		_timeToFirstItem = 0;
+		_timeToLastItem = 0;
+		_isFetching = true;
+
+		var sw = Stopwatch.StartNew();
+
+		var response = BookServiceClient.GetBooks(new GetBooksRequest
+		{
+			PageSize = 100
+		});
+
+		var i = 0;
+
+		await foreach (var item in response.ResponseStream.ReadAllAsync())
+		{
+			if (_timeToFirstItem == 0)
+			{
+				_timeToFirstItem = sw.ElapsedMilliseconds;
+			}
+
+			_timeToLastItem = sw.ElapsedMilliseconds;
+
+			_data.Add(item);
+
+			if (++i % 100 == 0)
+			{
+				StateHasChanged();
+			}
+		}
+	}
+}
