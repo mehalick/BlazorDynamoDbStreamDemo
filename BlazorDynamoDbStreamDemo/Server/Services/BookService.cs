@@ -1,7 +1,6 @@
 ﻿using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DocumentModel;
 using BlazorDynamoDbStreamDemo.Shared;
-using Grpc.Core;
 
 namespace BlazorDynamoDbStreamDemo.Server.Services;
 

@@ -1,16 +1,28 @@
 ﻿@page "/"
-@using System.Diagnostics
-@using BlazorDynamoDbStreamDemo.Shared
-@using Grpc.Core
 @inject BookService.BookServiceClient BookServiceClient
 
 <PageTitle>Index</PageTitle>
+
+<div class="row mb-3">
+	<div class="col-md">
+		<label for="pageSize" class="form-label fw-semibold small">Page Size</label>
+		<input id="pageSize" @bind="_pageSize" type="number" class="form-control form-control-sm" />
+	</div>
+	<div class="col-md">
+		<label for="renderCount" class="form-label fw-semibold small">Render Count</label>
+		<input id="renderCount" @bind="_renderCount" type="number" class="form-control form-control-sm" />
+	</div>
+	<div class="col-md">
+		<label for="taskDelay" class="form-label fw-semibold small">Task Delay</label>
+		<input id="taskDelay" @bind="_taskDelay" type="number" class="form-control form-control-sm" />
+	</div>
+</div>
 
 <button type="button" class="btn btn-primary mb-3" @onclick="FetchData">Fetch Data</button>
 
 @if (_isFetching)
 {
-	<p>Loaded <strong>@_data.Count</strong> items in <strong>@_timeToFirstItem</strong> ms - <strong>@_timeToLastItem</strong> ms</p>
+	<p>Fetched <strong>@_data.Count</strong> items in <strong>@_timeToFirstItem</strong> ms - <strong>@_timeToLastItem</strong> ms</p>
 
 	<table class="table table-bordered table-striped">
 		<colgroup>
@@ -44,6 +56,10 @@
 	private long _timeToLastItem;
 	private bool _isFetching;
 
+	private int _pageSize = 1000;
+	private int _renderCount = 500;
+	private int _taskDelay = 10;
+
 	protected async Task FetchData()
 	{
 		_data.Clear();
@@ -55,7 +71,7 @@
 
 		var response = BookServiceClient.GetBooks(new GetBooksRequest
 		{
-			PageSize = 100
+			PageSize = _pageSize
 		});
 
 		var i = 0;
@@ -71,9 +87,16 @@
 
 			_data.Add(item);
 
-			if (++i % 100 == 0)
+			if (++i % _renderCount != 0)
 			{
-				StateHasChanged();
+				continue;
+			}
+			
+			StateHasChanged();
+
+			if (_taskDelay > 0)
+			{
+				await Task.Delay(_taskDelay);
 			}
 		}
 	}
